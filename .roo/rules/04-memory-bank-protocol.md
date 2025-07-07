@@ -1,7 +1,7 @@
 # Memory Bank Protocol
 
 ## Overview
-The Memory Bank is a structured set of files in `.roo/memory-bank/` used for persistent context management across sessions and agents.
+The Memory Bank is a structured set of files in `.roo/memory-bank/` used for persistent context management across sessions and agents. It forms the core of an agent's operational cycle, which also includes direct communication protocols.
 
 ## Core Files
 - `activeContext.md`: Current session state and objectives.
@@ -9,6 +9,12 @@ The Memory Bank is a structured set of files in `.roo/memory-bank/` used for per
 - `progress.md`: Task tracking and project status.
 - `decisionLog.md`: Architecture Decision Records.
 - `systemPatterns.md`: Links to established coding standards.
+
+## Agent Operational Cycle
+An agent's operational cycle MUST follow this sequence at the beginning of any task:
+
+1.  **Check Mailbox:** The agent MUST first check for direct messages in the `.roo/mailbox/` directory by following the `05-mailbox-protocol.md`. Direct messages may take precedence over the general active context.
+2.  **Consult Memory Bank:** The agent then consults the Memory Bank to load the global project context, objectives, and status.
 
 ## Command: Update Memory Bank (UMB)
 - The `UMB` is a conceptual command representing a workflow to update the Memory Bank.

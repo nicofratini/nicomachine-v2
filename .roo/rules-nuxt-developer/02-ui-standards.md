@@ -40,68 +40,78 @@ module.exports = {
 ## Component Patterns
 
 ### Button System
-```vue
-<!-- Primary Button -->
-<button class="
-  px-4 py-2 
-  bg-primary-500 hover:bg-primary-600 
-  text-white font-medium 
-  rounded-lg 
-  transition-colors duration-200
-  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-  disabled:opacity-50 disabled:cursor-not-allowed
-">
-  Primary Action
-</button>
-
-<!-- Secondary Button -->
-<button class="
-  px-4 py-2 
-  border border-gray-300 hover:border-gray-400 
-  text-gray-700 font-medium 
-  rounded-lg 
-  transition-colors duration-200
-  focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
-">
-  Secondary Action
-</button>
+- Create a comprehensive, reusable button system that intelligently chooses between <button>, <a>, and <NuxtLink> elements based on usage context.
+- Use dynamic component rendering with <component :is="componentTag">
+- Implement conditional logic to determine the appropriate HTML element
+- Support all button variants, sizes, and states
+- Handle accessibility attributes properly for each element type
+```javascript
+// Conditional logic for element selection
+const componentTag = computed(() => {
+  if (props.to) return 'NuxtLink'           // Internal routing
+  if (props.href) return 'a'                // External links
+  return 'button'                           // Default interactive element
+})
 ```
+
+```typescript
+interface ButtonProps {
+  // Element determination
+  to?: string                    // NuxtLink internal routing
+  href?: string                  // External URL
+  
+  // Button variants
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  
+  // States
+  loading?: boolean
+  disabled?: boolean
+  
+  // Icons
+  iconLeft?: string
+  iconRight?: string
+  iconOnly?: boolean
+  
+  // Link-specific props
+  target?: '_blank' | '_self' | '_parent' | '_top'
+  rel?: string
+  external?: boolean             // Force external link behavior
+  
+  // Accessibility
+  ariaLabel?: string
+  
+  // Button-specific
+  type?: 'button' | 'submit' | 'reset'
+}
+```
+
+- Create base button classes that work across all element types
+- Implement size variations (padding, font-size, icon sizing)
+- Add state classes (hover, focus, disabled, loading)
+- Ensure consistent visual appearance regardless of underlying element
+- Maintain accessiblity for (type attribute, aria-label, aria-disabled...)
 
 ### Card Components
 ```vue
-<div class="
-  bg-white dark:bg-gray-800 
-  rounded-lg shadow-sm border border-gray-200 dark:border-gray-700
-  p-6
-  hover:shadow-md transition-shadow duration-200
-">
-  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-    Card Title
-  </h3>
-  <p class="text-gray-600 dark:text-gray-400">
-    Card content goes here
-  </p>
-</div>
+<UiCard>
+  <UiCardHeader>
+    <UiCardTitle>Card Title</UiCardTitle>
+  </UiCardHeader>
+  <UiCardContent>
+    <p>Card content goes here</p>
+  </UiCardContent>
+</UiCard>
 ```
 
 ### Form Elements
 ```vue
-<!-- Input Field -->
-<div class="space-y-1">
-  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-    Email
-  </label>
-  <input 
-    type="email"
-    class="
-      w-full px-3 py-2
-      border border-gray-300 dark:border-gray-600
-      rounded-md shadow-sm
-      focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-      dark:bg-gray-700 dark:text-white
-      placeholder-gray-400 dark:placeholder-gray-500
-    "
+  <UiLabel for="email">Email</UiLabel>
+  <UiInput 
+    id="email"
+    type="email" 
     placeholder="Enter your email"
+    v-model="form.email"
   />
 </div>
 ```
@@ -147,25 +157,102 @@ export default defineNuxtConfig({
 
 ### Dark Mode Patterns
 ```vue
-<!-- Light/Dark Mode Toggle -->
-<button @click="toggleDarkMode" class="
-  p-2 rounded-lg
-  bg-gray-100 dark:bg-gray-800
-  text-gray-800 dark:text-gray-200
-  hover:bg-gray-200 dark:hover:bg-gray-700
-  transition-colors duration-200
-">
-  <Icon :name="isDark ? 'sun' : 'moon'" />
-</button>
+<!-- components/ThemeToggle.vue -->
+<template>
+  <div class="theme-toggle">
+    <UiButton
+      variant="ghost"
+      size="sm"
+      @click="toggleTheme"
+      :aria-label="buttonLabel"
+      class="relative"
+    >
+      <Icon 
+        :name="currentIcon" 
+        class="h-4 w-4 transition-transform duration-200"
+        :class="{ 'rotate-180': $colorMode.value === 'dark' }"
+      />
+      <span class="sr-only">{{ buttonLabel }}</span>
+    </UiButton>
+  </div>
+</template>
 
-<!-- Dark Mode Color Usage -->
-<div class="
-  bg-white dark:bg-gray-900
-  text-gray-900 dark:text-white
-  border-gray-200 dark:border-gray-700
-">
-  Content that adapts to theme
-</div>
+<script setup lang="ts">
+const { $colorMode } = useNuxtApp()
+
+const currentIcon = computed(() => {
+  switch ($colorMode.value) {
+    case 'light':
+      return 'sun'
+    case 'dark':
+      return 'moon'
+    default:
+      return 'monitor'
+  }
+})
+
+const buttonLabel = computed(() => {
+  switch ($colorMode.value) {
+    case 'light':
+      return 'Switch to dark mode'
+    case 'dark':
+      return 'Switch to light mode'
+    default:
+      return 'Switch to system theme'
+  }
+})
+
+const toggleTheme = () => {
+  const themes = ['light', 'dark', 'system']
+  const currentIndex = themes.indexOf($colorMode.value)
+  const nextIndex = (currentIndex + 1) % themes.length
+  $colorMode.preference = themes[nextIndex]
+}
+</script>
+```
+
+```vue
+<!-- Example component with dark mode styling -->
+<template>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-4">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            My App
+          </h1>
+          <ThemeToggle />
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Content Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <UiCard class="hover:shadow-lg dark:hover:shadow-gray-800/25 transition-shadow">
+            <UiCardHeader>
+              <UiCardTitle class="text-gray-900 dark:text-gray-100">
+                Card Title
+              </UiCardTitle>
+              <UiCardDescription class="text-gray-600 dark:text-gray-400">
+                Card description text
+              </UiCardDescription>
+            </UiCardHeader>
+            <UiCardContent>
+              <p class="text-gray-700 dark:text-gray-300">
+                Card content goes here
+              </p>
+            </UiCardContent>
+          </UiCard>
+        </div>
+      </div>
+    </main>
+  </div>
+</template>
+
 ```
 
 ## Animation and Interactions
